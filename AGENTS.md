@@ -8,6 +8,13 @@ Read `docs/DESIGN.md` before starting any issue. It is the source of truth.
   service code reads data only through the repository layer, which requires an
   owner. Never write a query that can return another owner's rows. Add a test
   for owner isolation whenever you add a query.
+  - Queries live in `src/kinship/repo/<area>.py` as a `BaseRepository`
+    subclass, built with `self.select(Model)` / `self.owned(Other)` and run
+    with `self.scalars` / `self.rows`; add the class to the `Repository`
+    facade in `repo/__init__.py`.
+  - Code in `src/kinship/server/` never imports `kinship.db` or `sqlalchemy`.
+    Tools live in `server/tools/<name>.py`, expose `register(mcp)`, and read
+    data with `with repo_session() as repo:`.
 - **Never commit real LinkedIn data.** Use the synthetic generator and
   `tests/fixtures/`. If you see a real export in the working tree, stop.
 - **No secrets in code.** Configuration comes from environment variables
