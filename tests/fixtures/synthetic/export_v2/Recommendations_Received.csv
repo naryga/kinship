@@ -1,0 +1,15 @@
+First Name,Last Name,Company,Job Title,Text,Creation Date,Status
+Freya,Rookwood,Acme,Analytics Engineer,"Sam rebuilt our nightly data pipelines in Airflow and cut the warehouse load from six hours to forty minutes.
+
+Every batch job got alerting and a runbook. I would work with Sam again without hesitation.","12/09/22, 01:27 PM",VISIBLE
+Vesper,Lindenmoor,"Acme, Inc.",Billing Systems Analyst,"Sam untangled our pharmacy claims backlog. Rejected insurance claims dropped by a third once the healthcare billing rules were encoded as tests, and the audit trail satisfied our HIPAA reviewers.","12/22/21, 09:15 AM",VISIBLE
+Greer,Harrowgate,ACME Corp,Android Developer,"Sam shipped our iOS and Android apps on one shared API and kept the crash-free rate above 99.8%.
+
+The offline sync design alone saved the mobile team a quarter of rework.","03/14/25, 12:43 PM",HIDDEN
+Casey,Foxglove,Gifthealth,Security Engineer,Sam led our SOC 2 security audit from scoping to the final report. The penetration test findings were triaged within a week and the access-review process now runs itself.,"08/21/23, 08:27 PM",VISIBLE
+Quinn,Copperpot,"Gift Health, Inc.",Machine Learning Engineer,Sam built the churn prediction model that our retention team still uses. Careful feature engineering and honest offline evaluation meant the model held up when it met production traffic.,"07/09/24, 09:51 AM",VISIBLE
+Hattie,Birchall,gift health,Billing Platform Engineer,Sam designed the double-entry ledger behind our card payments and made reconciliation with the processor a daily non-event. Refund and chargeback handling finally matched what finance expected.,"08/26/22, 08:54 PM",VISIBLE
+Oakley,Nettlefold,Quillfeather Systems,Platform Engineer,"Sam migrated forty services to Kubernetes with Terraform and no customer-facing downtime.
+
+On-call pages fell by half after the new dashboards and deploy pipeline landed.","03/26/19, 07:42 AM",VISIBLE
+Blake,Bramblewick,"Quillfeather Systems, LLC",Design Researcher,"Sam ran the user interviews and usability tests that reshaped our onboarding flow. The research readouts were short, specific and impossible to ignore.","09/12/26, 11:05 AM",VISIBLE
