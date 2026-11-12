@@ -1,0 +1,9 @@
+Company Name,Title,Description,Location,Started On,Finished On
+"Gift Health, Inc.",Senior Data Engineer,"Own the pharmacy claims data pipelines: ingestion from payers, healthcare billing reconciliation and the reporting warehouse.
+
+- Cut rejected-claim turnaround from days to hours
+- Mentor three engineers and run the incident review rota","Faketown, Example State",Mar 2022,
+"Acme, Inc.",Data Engineer,Built Airflow batch pipelines and dbt models feeding the analytics warehouse. Introduced data quality checks that caught schema drift before dashboards broke.,"Sampleville, Example State",Jun 2018,Feb 2022
+Quillfeather Systems,Software Engineer,"Backend APIs for the iOS and Android mobile apps, including offline sync and push notifications. Moved the service from a single server to containers.",Remote,2015,May 2018
+Copperline Freight,Junior Developer,Route-planning tools for freight dispatchers; SQL reports on delivery times and a small internal web app for tracking shipments.,"Placeholder City, Testland",Aug 2012,2015
+Saltmarsh Bank,Engineering Intern,Wrote scripts for the security audit team to collect access-review evidence and flag dormant accounts.,"Faketown, Example State",Jun 2011,Sep 2011
