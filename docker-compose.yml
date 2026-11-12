@@ -1,0 +1,14 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: kinship
+      POSTGRES_PASSWORD: kinship
+      POSTGRES_DB: kinship
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kinship"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
