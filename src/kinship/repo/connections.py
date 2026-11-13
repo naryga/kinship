@@ -222,9 +222,10 @@ class ConnectionsRepository(CompaniesRepository):
             }
         )
 
+    # Case-insensitive and in the "C" collation, so the order is the same on every database.
     _BY_NAME = (
-        Connection.last_name.asc().nulls_last(),
-        Connection.first_name.asc().nulls_last(),
+        sa.func.lower(Connection.last_name).collate("C").asc().nulls_last(),
+        sa.func.lower(Connection.first_name).collate("C").asc().nulls_last(),
         Connection.id,
     )
 

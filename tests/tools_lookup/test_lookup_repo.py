@@ -268,7 +268,9 @@ def test_search_excludes_removed_connections(repo: Repository) -> None:
 
 def test_search_order_limit_and_total(repo: Repository) -> None:
     everyone = repo.search_connections(limit=MAX_SEARCH_LIMIT).connections
-    by_name = {identity(c): (c.last_name, c.first_name) for c in WORLD.connections(2)}
+    by_name = {
+        identity(c): (c.last_name.lower(), c.first_name.lower()) for c in WORLD.connections(2)
+    }
     keys = [by_name[identity(p)] for p in everyone]
     assert keys == sorted(keys)
 
