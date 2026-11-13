@@ -130,5 +130,37 @@ def embed(
     typer.echo(summary.format())
 
 
+@app.command("import")
+def import_(
+    path: Annotated[Path, typer.Argument(help="LinkedIn export .zip or extracted directory.")],
+    owner: Annotated[
+        str, typer.Option(help="Owner id, or a display name (created if it does not exist).")
+    ],
+    exported_at: Annotated[
+        str | None,
+        typer.Option(help="Export time (ISO 8601); overrides the time derived from the files."),
+    ] = None,
+) -> None:
+    """Import a LinkedIn data export for an owner. Safe to repeat, in any order."""
+    from datetime import datetime
+
+    from kinship.ingest import OwnerNotFoundError, run_import
+    from kinship.parser import ExportError
+
+    when = None
+    if exported_at is not None:
+        try:
+            when = datetime.fromisoformat(exported_at)
+        except ValueError as error:
+            raise typer.BadParameter("must be ISO 8601", param_hint="--exported-at") from error
+    name = owner.strip()
+    try:
+        summary = run_import(path, int(name) if name.isdecimal() else name, exported_at=when)
+    except (ExportError, OwnerNotFoundError) as error:
+        typer.echo(f"Error: {error}", err=True)
+        raise typer.Exit(1) from error
+    typer.echo(summary.format())
+
+
 if __name__ == "__main__":
     app()

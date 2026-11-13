@@ -27,6 +27,7 @@ EXPECTED_TABLES = {
     "companies",
     "connections",
     "connection_history",
+    "connection_sightings",
     "messages",
     "my_positions",
     "profiles",

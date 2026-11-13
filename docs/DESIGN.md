@@ -53,6 +53,10 @@ Every table below except `owners` has `owner_id` (FK) and is indexed on it.
   company_id, position, connected_on, first_seen_import_id, last_seen_import_id,
   removed_at)` — unique on `(owner_id, profile_url)`.
 - `connection_history(id, owner_id, connection_id, import_id, company_raw, position)`
+  — the role timeline: a row for the first import that contains the connection and
+  for each later import (by `exported_at`) that shows a different company or title.
+- `connection_sightings(id, owner_id, connection_id, import_id, company_raw, position)`
+  — importer bookkeeping: what each import saw; `connection_history` is derived from it.
 - `messages(id, owner_id, conversation_id, from_name, to_names, sent_at, subject,
   body, connection_id NULL)`
 - `my_positions(id, owner_id, company, title, started_on, ended_on, description)`
@@ -70,12 +74,13 @@ Input: a LinkedIn export `.zip` or an extracted directory.
 - **Diffing between exports.** New connections are inserted; a changed company or
   title writes a `connection_history` row; a connection missing from a newer
   export gets `removed_at` (never deleted).
-- **Order-tolerant.** Exports may be imported in any order; `exported_at` (from
-  file metadata or the CSVs) decides what is "newer".
+- **Order-tolerant.** Exports may be imported in any order and the database ends
+  up the same; `exported_at` (from file metadata, or `--exported-at`) decides what
+  is "newer". The exact rules are in the `kinship.ingest.importer` docstring.
 - **CSV quirks.** LinkedIn files can start with a "Notes:" preamble before the
   header, use mixed date formats, and have blank emails. The parser handles all
   three.
-- CLI: `kinship import PATH --owner OWNER`. Run locally against any
+- CLI: `kinship import PATH --owner OWNER [--exported-at ISO8601]`. Run locally against any
   `DATABASE_URL`, including production.
 
 An older full export can be imported first; the newer one becomes import #2 and
