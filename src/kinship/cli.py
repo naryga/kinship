@@ -58,6 +58,19 @@ def synth(
     typer.echo(f"Wrote synthetic {variant} export v{version} (seed {seed}) to {path}")
 
 
+@app.command()
+def serve(
+    host: str = typer.Option("127.0.0.1", help="Address to bind."),
+    port: int = typer.Option(8000, help="Port to listen on."),
+) -> None:
+    """Run the MCP server (Streamable HTTP at /mcp, health check at /healthz)."""
+    import uvicorn
+
+    from kinship.server.app import create_app
+
+    uvicorn.run(create_app(host=host), host=host, port=port)
+
+
 @app.command("import")
 def import_(
     path: Annotated[Path, typer.Argument(help="LinkedIn export .zip or extracted directory.")],
