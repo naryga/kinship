@@ -30,9 +30,16 @@ class ImportInfo:
 
 class ImportsRepository(BaseRepository):
     def latest_import(self) -> ImportInfo | None:
-        """The owner's most recently loaded import, or None before the first one."""
+        """The owner's newest import, or None before the first one.
+
+        "Newest" is the latest `exported_at` (the export's own date), not the
+        one loaded last: an old export imported late is not the latest. Imports
+        without an export date sort last; ties go to the higher id.
+        """
         row = self.scalar(
-            self.select(Import).order_by(Import.imported_at.desc(), Import.id.desc()).limit(1)
+            self.select(Import)
+            .order_by(Import.exported_at.desc().nulls_last(), Import.id.desc())
+            .limit(1)
         )
         if row is None:
             return None
