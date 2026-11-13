@@ -130,11 +130,11 @@ def test_matched_skills_and_missing_terms(repo_a: Repository) -> None:
     assert result.matched_skills == [
         "Apache Airflow",
         "Data Pipelines",
+        "dbt",
         "Healthcare Billing",
         "Mentoring",  # the description says "Mentor other engineers"
         "Python",
         "SQL",
-        "dbt",
     ]
     # Named tools that Sam's history and skills never mention.
     assert result.missing_terms == ["snowflake", "kafka", "spark"]
@@ -143,7 +143,7 @@ def test_matched_skills_and_missing_terms(repo_a: Repository) -> None:
 
     no_gaps = run(repo_a, "Data Engineer\nWe use Airflow, dbt and SQL. Airflow, dbt, SQL!")
     assert no_gaps.missing_terms == []
-    assert no_gaps.matched_skills == ["SQL", "dbt"]
+    assert no_gaps.matched_skills == ["dbt", "SQL"]
 
 
 # -- the role ---------------------------------------------------------------------------

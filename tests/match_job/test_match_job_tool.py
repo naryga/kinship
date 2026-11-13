@@ -122,11 +122,11 @@ async def test_round_trip_with_the_sample_job(job_app, job_client) -> None:
     assert data["matched_skills"] == [
         "Apache Airflow",
         "Data Pipelines",
+        "dbt",
         "Healthcare Billing",
         "Mentoring",
         "Python",
         "SQL",
-        "dbt",
     ]
     assert data["missing_terms"] == ["snowflake", "kafka", "spark"]
     assert data["missing_terms_note"] == MISSING_TERMS_NOTE

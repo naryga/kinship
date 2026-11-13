@@ -145,9 +145,10 @@ class JobMatchRepository(BaseRepository):
         return [company for _, company in found[:limit]]
 
     def skill_names(self) -> list[str]:
-        """The owner's skills, by name."""
-        names = self.scalars(self.select(Skill, Skill.name).order_by(Skill.name, Skill.id))
-        return list(dict.fromkeys(name.strip() for name in names if name and name.strip()))
+        """The owner's skills, by name (ignoring case, whatever the database collation)."""
+        names = self.scalars(self.select(Skill, Skill.name).order_by(Skill.id))
+        distinct = dict.fromkeys(name.strip() for name in names if name and name.strip())
+        return sorted(distinct, key=lambda name: (name.casefold(), name))
 
     def terms_in_chunks(
         self, terms: Sequence[str], *, sources: Sequence[str] | None = None

@@ -110,7 +110,8 @@ def test_companies_named_in_only_sees_the_owners_companies(
 
 
 def test_skill_names_are_the_owners(repo_a: Repository, repo_b: Repository) -> None:
-    assert repo_a.skill_names() == sorted(OWNER_SKILLS)
+    assert repo_a.skill_names() == sorted(OWNER_SKILLS, key=str.casefold)
+    assert repo_a.skill_names()[:2] == ["Apache Airflow", "API Design"]
     assert set(repo_b.skill_names()) == {*OWNER_SKILLS, B_ONLY_SKILL}
 
 
