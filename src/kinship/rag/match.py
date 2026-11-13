@@ -163,6 +163,7 @@ _TITLE_SEPARATORS = re.compile(
 )
 _AT = re.compile(r"\s+(?:at|@)\s+", re.IGNORECASE)
 _PARAGRAPH_BREAK = re.compile(r"\n[ \t]*\n+")
+_LEGAL_SUFFIX_DOT = re.compile(r"\b(inc|llc|ltd|corp|co)\.$", re.IGNORECASE)
 _SENTENCE_END = re.compile(r"[.!?:;]")
 
 
@@ -286,9 +287,9 @@ def infer_title(text: str) -> tuple[str | None, str | None]:
     for line in top:
         if _TITLE_LABEL.match(line) or _COMPANY_LABEL.match(line) or _NOT_A_TITLE.match(line):
             continue
-        cleaned = _clean_title(line)
+        cleaned = _LEGAL_SUFFIX_DOT.sub(r"\1", _clean_title(line))
         if (
-            not cleaned
+            not any(char.isalpha() for char in cleaned)
             or len(cleaned) > MAX_TITLE_CHARS
             or cleaned.endswith((".", "!", "?"))
             or len(cleaned.split()) > MAX_TITLE_WORDS

@@ -126,13 +126,13 @@ class JobMatchRepository(BaseRepository):
                 for name in names
                 if len(name) >= MIN_COMPANY_NAME_CHARS and name not in NOT_COMPANY_NAMES
             }
-            # A longer spelling contains the shorter ones; count each place once.
-            longest = max(names, key=len, default="")
-            mentions = haystack.count(f" {longest} ") if longest else 0
-            if not mentions:
-                mentions = max((haystack.count(f" {name} ") for name in names), default=0)
+            # One company's names differ only in spacing, so no mention counts twice.
+            mentions = sum(
+                len(re.findall(rf"(?<= ){re.escape(name)}(?= )", haystack)) for name in names
+            )
             if not mentions:
                 continue
+            longest = max(names, key=len)
             exact = any(
                 re.search(rf"(?<!\w){re.escape(spelling)}(?!\w)", text) for spelling in spellings
             )
