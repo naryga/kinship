@@ -15,6 +15,8 @@ class Settings(BaseSettings):
 
     database_url: str = LOCAL_DATABASE_URL
     openai_api_key: str = ""
+    # `openai` or `fake`; empty means `openai`. See `kinship.rag.embedder.get_embedder`.
+    kinship_embedder: str = ""
     # v0 auth: comma-separated `token:owner_id` pairs.
     kinship_tokens: str = ""
 
