@@ -21,7 +21,7 @@ Non-goals: scraping LinkedIn, writing back to LinkedIn, a web UI.
 | Area | Decision | Why |
 |---|---|---|
 | Language | Python 3.12+, managed with `uv` | Default ecosystem for both MCP and RAG |
-| MCP | Official `mcp` Python SDK (`FastMCP`), Streamable HTTP transport | Remote, hosted server |
+| MCP | Official `mcp` Python SDK (`MCPServer`, formerly `FastMCP`), Streamable HTTP transport | Remote, hosted server |
 | Database | Postgres 16+ with `pgvector` | Real DB for a hosted service; FTS + vectors in one place |
 | Data access | SQLAlchemy 2.x + Alembic migrations, psycopg 3 | Typed, migrated, testable |
 | Embeddings | OpenAI `text-embedding-3-small` (1536-d) behind an `Embedder` protocol | Cheapest good option; swappable. A deterministic fake embedder is used in tests |
