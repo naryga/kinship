@@ -71,6 +71,65 @@ def serve(
     uvicorn.run(create_app(host=host), host=host, port=port)
 
 
+@app.command()
+def embed(
+    owner: Annotated[str, typer.Option(help="Owner id, or the owner's exact display name.")],
+    include_messages: Annotated[
+        bool, typer.Option("--include-messages", help="Also chunk and embed message bodies.")
+    ] = False,
+    purge_messages: Annotated[
+        bool, typer.Option("--purge-messages", help="Delete this owner's message chunks.")
+    ] = False,
+    embedder: Annotated[
+        str | None,
+        typer.Option(help="openai or fake (test vectors). Default: KINSHIP_EMBEDDER, else openai."),
+    ] = None,
+    batch_size: Annotated[int, typer.Option(min=1, help="Chunks embedded per request.")] = 64,
+) -> None:
+    """Chunk an owner's data and embed the chunks that are new or changed."""
+    from kinship.config import get_settings
+    from kinship.db.engine import get_sessionmaker
+    from kinship.rag.embedder import EmbedderError, embedder_name, get_embedder
+    from kinship.rag.indexer import OwnerNotFoundError, resolve_owner_id, sync_chunks
+
+    def fail(message: str) -> typer.Exit:
+        typer.echo(f"Error: {message}", err=True)
+        return typer.Exit(1)
+
+    if include_messages and purge_messages:
+        raise fail("--include-messages and --purge-messages cannot be used together.")
+    settings = get_settings()
+    try:
+        if embedder is None and embedder_name(settings) == "fake":
+            # Fake vectors in a real database are useless, so an environment
+            # variable alone is not enough to select them.
+            raise fail("KINSHIP_EMBEDDER=fake: pass --embedder fake to confirm test vectors.")
+        chosen = get_embedder(settings, embedder, batch_size=batch_size)
+    except EmbedderError as error:
+        raise fail(str(error)) from error
+
+    session = get_sessionmaker()()
+    try:
+        owner_id = resolve_owner_id(session, owner)
+        summary = sync_chunks(
+            session,
+            owner_id,
+            chosen,
+            include_messages=include_messages,
+            purge_messages=purge_messages,
+            batch_size=batch_size,
+            # Commit as we go: a failure late in a long run keeps the vectors already paid for.
+            after_batch=session.commit,
+        )
+        session.commit()
+    except (OwnerNotFoundError, EmbedderError) as error:
+        session.rollback()
+        raise fail(str(error)) from error
+    finally:
+        session.close()
+    typer.echo(summary.format())
+
+
 @app.command("import")
 def import_(
     path: Annotated[Path, typer.Argument(help="LinkedIn export .zip or extracted directory.")],

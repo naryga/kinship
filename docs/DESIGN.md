@@ -122,6 +122,10 @@ Resource: `kinship://imports/latest`. Prompt: `draft_intro_request(connection, j
   by conversation, capped near 500 tokens.
 - **Message bodies are not embedded by default.** Embedding them requires an
   explicit flag.
+- CLI: `kinship embed --owner OWNER [--include-messages] [--purge-messages]
+  [--embedder openai|fake]`. Only new or changed chunks are embedded
+  (`content_hash`); each chunk stores its `model` and `dim`. The fake embedder
+  is never chosen implicitly.
 - **Retrieval:** hybrid. Postgres full-text search (`ts_rank`) and pgvector
   cosine similarity, merged with reciprocal rank fusion.
 - **Evaluation:** a golden set of ~20 queries over the synthetic dataset, with
