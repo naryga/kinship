@@ -73,7 +73,7 @@ def _connection_fk() -> Mapped[int | None]:
 
 
 def _company_fk() -> Mapped[int | None]:
-    """Nullable link to the normalized company, resolved at import."""
+    """Nullable link to the owner's normalized company, set by `rebuild_companies`."""
     return mapped_column(ForeignKey("companies.id", ondelete="SET NULL"), index=True)
 
 
@@ -114,6 +114,12 @@ class Import(OwnedMixin, Base):
 
 
 class Company(OwnedMixin, Base):
+    """One company per owner and normalized key, rebuilt by `kinship.ingest.companies`.
+
+    `name_normalized` is `kinship.companies.company_key` of every spelling in
+    `aliases` (sorted raw spellings); `display_name` is the most common one.
+    """
+
     __tablename__ = "companies"
     __table_args__ = (UniqueConstraint("owner_id", "name_normalized"),)
 
@@ -168,6 +174,7 @@ class ConnectionHistory(OwnedMixin, Base):
     )
     import_id: Mapped[int] = mapped_column(ForeignKey("imports.id", ondelete="CASCADE"))
     company_raw: Mapped[str | None] = mapped_column(Text)
+    company_id: Mapped[int | None] = _company_fk()
     position: Mapped[str | None] = mapped_column(Text)
 
 
@@ -212,6 +219,7 @@ class MyPosition(OwnedMixin, Base):
 
     id: Mapped[int] = _pk()
     company: Mapped[str | None] = mapped_column(Text)
+    company_id: Mapped[int | None] = _company_fk()
     title: Mapped[str | None] = mapped_column(Text)
     description: Mapped[str | None] = mapped_column(Text)
     location: Mapped[str | None] = mapped_column(Text)

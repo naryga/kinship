@@ -10,6 +10,7 @@ add it to the base list on its own line (see `kinship.repo.base` for the rules).
 
 from kinship.repo.base import BaseRepository, OwnerScope, owned_models
 from kinship.repo.chunks import ChunksRepository
+from kinship.repo.companies import CompaniesRepository, CompanyMatch
 from kinship.repo.imports import ImportInfo, ImportsRepository
 from kinship.repo.session import (
     SessionFactory,
@@ -22,6 +23,7 @@ from kinship.repo.session import (
 # One mixin per line so that parallel branches merge cleanly.
 class Repository(
     ChunksRepository,
+    CompaniesRepository,
     ImportsRepository,
     BaseRepository,
 ):
@@ -31,6 +33,8 @@ class Repository(
 __all__ = [
     "BaseRepository",
     "ChunksRepository",
+    "CompaniesRepository",
+    "CompanyMatch",
     "ImportInfo",
     "ImportsRepository",
     "OwnerScope",

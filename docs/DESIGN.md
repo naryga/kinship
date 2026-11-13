@@ -48,18 +48,28 @@ Every table below except `owners` has `owner_id` (FK) and is indexed on it.
 - `owners(id, display_name, created_at)`
 - `imports(id, owner_id, source_sha256, exported_at, imported_at, file_counts jsonb)`
   — unique on `(owner_id, source_sha256)`; re-importing the same export is a no-op.
-- `companies(id, owner_id, name_normalized, display_name, aliases jsonb)`
+- `companies(id, owner_id, name_normalized, display_name, aliases jsonb)` — unique on
+  `(owner_id, name_normalized)`. `name_normalized` is the grouping key from
+  `kinship.companies.company_key`: case, accents, punctuation, spacing and trailing
+  legal suffixes (Inc, LLC, Ltd, Corp, Co, ...) are ignored, so "Gifthealth",
+  "Gift Health, Inc." and "gift health" are one company. `aliases` is the sorted list
+  of raw spellings seen; `display_name` is the spelling most current connections use.
+  Rebuilt from all of the owner's rows at the end of every import
+  (`kinship.ingest.rebuild_companies`); every `company_id` below is set by that step.
 - `connections(id, owner_id, profile_url, first_name, last_name, email, company_raw,
   company_id, position, connected_on, first_seen_import_id, last_seen_import_id,
   removed_at)` — unique on `(owner_id, profile_url)`.
-- `connection_history(id, owner_id, connection_id, import_id, company_raw, position)`
+- `connection_history(id, owner_id, connection_id, import_id, company_raw, company_id,
+  position)`
   — the role timeline: a row for the first import that contains the connection and
   for each later import (by `exported_at`) that shows a different company or title.
 - `connection_sightings(id, owner_id, connection_id, import_id, company_raw, position)`
   — importer bookkeeping: what each import saw; `connection_history` is derived from it.
 - `messages(id, owner_id, conversation_id, from_name, to_names, sent_at, subject,
   body, connection_id NULL)`
-- `my_positions(id, owner_id, company, title, started_on, ended_on, description)`
+- `my_positions(id, owner_id, company, company_id, title, started_on, ended_on,
+  description)`
+- `company_follows`, `job_applications`, `saved_jobs` — each with a `company_id` too.
 - `endorsements(...)`, `recommendations(...)` — received; text kept for embedding.
 - `chunks(id, owner_id, source_table, source_id, text, tsv tsvector,
   embedding vector, model, dim, created_at)`
@@ -77,6 +87,9 @@ Input: a LinkedIn export `.zip` or an extracted directory.
 - **Order-tolerant.** Exports may be imported in any order and the database ends
   up the same; `exported_at` (from file metadata, or `--exported-at`) decides what
   is "newer". The exact rules are in the `kinship.ingest.importer` docstring.
+- **Companies.** Raw company names are grouped into `companies` and linked by
+  `company_id` (see the data model). Tools resolve a typed name with
+  `Repository.find_companies(query)`: exact key, then prefix, then substring.
 - **CSV quirks.** LinkedIn files can start with a "Notes:" preamble before the
   header, use mixed date formats, and have blank emails. The parser handles all
   three.
