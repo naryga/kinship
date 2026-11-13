@@ -153,7 +153,12 @@ class Connection(OwnedMixin, Base):
 
 
 class ConnectionHistory(OwnedMixin, Base):
-    """A connection's company/position as seen in one import (written when it changes)."""
+    """A connection's company/position timeline: one row per import that changed it.
+
+    The first import that contains the connection gets a row, and so does every
+    later import (by `imports.exported_at`) whose company or position differs
+    from the previous import that contained it. See `kinship.ingest`.
+    """
 
     __tablename__ = "connection_history"
 
@@ -162,6 +167,24 @@ class ConnectionHistory(OwnedMixin, Base):
         ForeignKey("connections.id", ondelete="CASCADE"), index=True
     )
     import_id: Mapped[int] = mapped_column(ForeignKey("imports.id", ondelete="CASCADE"))
+    company_raw: Mapped[str | None] = mapped_column(Text)
+    position: Mapped[str | None] = mapped_column(Text)
+
+
+class ConnectionSighting(OwnedMixin, Base):
+    """The company/position a connection had in one import: one row per (connection, import).
+
+    This is the importer's observation log. `connection_history` is derived
+    from it, which is what lets exports be imported in any order (see
+    `kinship.ingest`). Read-side code should use `connection_history`.
+    """
+
+    __tablename__ = "connection_sightings"
+    __table_args__ = (UniqueConstraint("connection_id", "import_id"),)
+
+    id: Mapped[int] = _pk()
+    connection_id: Mapped[int] = mapped_column(ForeignKey("connections.id", ondelete="CASCADE"))
+    import_id: Mapped[int] = mapped_column(ForeignKey("imports.id", ondelete="CASCADE"), index=True)
     company_raw: Mapped[str | None] = mapped_column(Text)
     position: Mapped[str | None] = mapped_column(Text)
 
