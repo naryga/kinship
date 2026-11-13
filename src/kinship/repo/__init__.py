@@ -12,6 +12,7 @@ from kinship.repo.base import BaseRepository, OwnerScope, owned_models
 from kinship.repo.chunks import ChunksRepository
 from kinship.repo.companies import CompaniesRepository, CompanyMatch
 from kinship.repo.imports import ImportInfo, ImportsRepository
+from kinship.repo.jobmatch import JobMatchRepository
 from kinship.repo.network import NetworkRepository
 from kinship.repo.retrieval import ChunkHit, RetrievalRepository, SourceInfo
 from kinship.repo.session import (
@@ -27,6 +28,7 @@ class Repository(
     ChunksRepository,
     CompaniesRepository,
     ImportsRepository,
+    JobMatchRepository,
     NetworkRepository,
     RetrievalRepository,
     BaseRepository,
@@ -42,6 +44,7 @@ __all__ = [
     "CompanyMatch",
     "ImportInfo",
     "ImportsRepository",
+    "JobMatchRepository",
     "NetworkRepository",
     "OwnerScope",
     "Repository",

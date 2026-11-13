@@ -1,0 +1,30 @@
+Senior Data Engineer
+Tessellate Health - Faketown, Example State (hybrid)
+
+About the role
+Tessellate Health processes pharmacy and medical claims for regional health plans. We are
+looking for a Senior Data Engineer to own the data pipelines that move claims from payers
+into our reporting warehouse, and to make healthcare billing data something the rest of
+the company can trust.
+
+What you will do
+- Design, build and operate batch data pipelines in Apache Airflow, with alerting and a
+  runbook for every job
+- Model claims and billing data in dbt and keep the Snowflake warehouse fast and well tested
+- Add data quality checks that catch schema drift and rejected claims before they reach
+  finance dashboards
+- Work with our compliance team on HIPAA audit trails and access reviews
+- Mentor other engineers and take part in the incident review rota
+
+What we are looking for
+- 5+ years of data engineering experience with Python and SQL
+- Production experience with Airflow or a similar orchestrator, and with dbt
+- Experience with streaming systems such as Kafka or Spark is a plus
+- Background in healthcare billing, pharmacy claims or insurance payers
+- Clear written communication with stakeholders outside engineering
+
+Benefits
+Competitive salary and equity, health insurance, a remote-friendly team and a generous
+holiday allowance. Tessellate Health is an equal opportunity employer.
+
+Fictional posting; not a real vacancy.
