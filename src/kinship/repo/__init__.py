@@ -11,6 +11,7 @@ add it to the base list on its own line (see `kinship.repo.base` for the rules).
 from kinship.repo.base import BaseRepository, OwnerScope, owned_models
 from kinship.repo.chunks import ChunksRepository
 from kinship.repo.companies import CompaniesRepository, CompanyMatch
+from kinship.repo.connections import ConnectionsRepository
 from kinship.repo.imports import ImportInfo, ImportsRepository
 from kinship.repo.network import NetworkRepository
 from kinship.repo.retrieval import ChunkHit, RetrievalRepository, SourceInfo
@@ -25,6 +26,7 @@ from kinship.repo.session import (
 # One mixin per line so that parallel branches merge cleanly.
 class Repository(
     ChunksRepository,
+    ConnectionsRepository,  # extends CompaniesRepository, so it must come first
     CompaniesRepository,
     ImportsRepository,
     NetworkRepository,
@@ -40,6 +42,7 @@ __all__ = [
     "ChunksRepository",
     "CompaniesRepository",
     "CompanyMatch",
+    "ConnectionsRepository",
     "ImportInfo",
     "ImportsRepository",
     "NetworkRepository",
