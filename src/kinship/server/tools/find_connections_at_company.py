@@ -52,7 +52,7 @@ def register(mcp: MCPServer) -> None:
         For one person's full details call `get_connection` with their profile_url."""
         with repo_session() as repo:
             resolution = repo.resolve_company(company)
-            people = repo.connections_at_companies(resolution.company_ids, include_former)
+            people = repo.people_at_companies(resolution.company_ids, include_former)
 
         asked = " ".join(company.split())
         suggestions = list(resolution.suggestions)

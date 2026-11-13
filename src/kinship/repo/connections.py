@@ -231,7 +231,7 @@ class ConnectionsRepository(CompaniesRepository):
 
     # -- who is (or was) at a company ---------------------------------------------
 
-    def connections_at_companies(
+    def people_at_companies(
         self, company_ids: Sequence[int], include_former: bool = False
     ) -> list[Record]:
         """Connections at any of these companies, current ones first, each by name.

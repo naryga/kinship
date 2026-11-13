@@ -36,7 +36,7 @@ def identities(people) -> list[tuple[str, str | None]]:
 
 def at_company(repo: Repository, name: str, include_former: bool = False) -> list[dict]:
     resolution = repo.resolve_company(name)
-    return repo.connections_at_companies(resolution.company_ids, include_former)
+    return repo.people_at_companies(resolution.company_ids, include_former)
 
 
 # -- find_connections_at_company ---------------------------------------------------
@@ -51,7 +51,7 @@ def test_gift_health_returns_exactly_the_current_connections(repo: Repository, q
     assert {matched["display_name"], *matched["aliases"]} == set(WORLD.company_groups["gifthealth"])
     assert matched["display_name"] not in matched["aliases"]
 
-    people = repo.connections_at_companies(resolution.company_ids)
+    people = repo.people_at_companies(resolution.company_ids)
     expected = WORLD.connections_at("gifthealth", 2)
     assert len(expected) > 1
     assert identities(people) == identities(expected)
@@ -198,7 +198,7 @@ def test_company_resolution(repo: Repository) -> None:
     for nothing in ("", "   ", "no such company anywhere", "%", "_"):
         resolution = repo.resolve_company(nothing)
         assert resolution.matched == () and resolution.suggestions == (), nothing
-        assert repo.connections_at_companies(resolution.company_ids, True) == []
+        assert repo.people_at_companies(resolution.company_ids, True) == []
 
 
 # -- search_connections --------------------------------------------------------------
@@ -496,8 +496,8 @@ def test_owner_a_never_sees_owner_b(two_owners: TwoOwners, session) -> None:
     assert a.resolve_company(B_ONLY_COMPANY).matched == ()
     assert a.resolve_company("bumblethwaite").suggestions == ()
     assert [p["name"] for p in at_company(b, B_ONLY_COMPANY)] == ["Bryony Onlybee"]
-    assert a.connections_at_companies(b.resolve_company(B_ONLY_COMPANY).company_ids, True) == []
-    assert a.connections_at_companies(b.resolve_company("gift health").company_ids, True) == []
+    assert a.people_at_companies(b.resolve_company(B_ONLY_COMPANY).company_ids, True) == []
+    assert a.people_at_companies(b.resolve_company("gift health").company_ids, True) == []
 
     assert a.search_connections("onlybee").total == 0
     assert a.search_connections(company=B_ONLY_COMPANY).total == 0
@@ -522,3 +522,14 @@ def test_owner_a_never_sees_owner_b(two_owners: TwoOwners, session) -> None:
     assert detail_b["message_count"] == detail_a["message_count"] + 1
     assert a.connection_detail(b_row.id) is None
     assert b.connection_detail(b_row.id) == detail_b
+
+
+def test_no_other_repository_mixin_defines_the_same_names() -> None:
+    """The facade mixes every repository into one class; a shared name would shadow one."""
+    from kinship.repo.connections import ConnectionsRepository
+
+    mine = {name for name in vars(ConnectionsRepository) if not name.startswith("__")}
+    for base in Repository.__mro__:
+        if base in (Repository, ConnectionsRepository, object):
+            continue
+        assert not mine & set(vars(base)), base.__name__
