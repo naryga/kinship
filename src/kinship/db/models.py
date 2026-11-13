@@ -377,6 +377,12 @@ class Chunk(OwnedMixin, Base):
     __table_args__ = (
         UniqueConstraint("owner_id", "source_table", "source_id", "chunk_index"),
         Index("ix_chunks_tsv", "tsv", postgresql_using="gin"),
+        Index(
+            "ix_chunks_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
     )
 
     id: Mapped[int] = _pk()
