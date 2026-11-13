@@ -111,8 +111,11 @@ text summary.
    recommendations, and shared past employers
 5. `network_changes(since)` — job changes and new connections
 6. `semantic_search(query, sources, k)` — the RAG retrieval tool
-7. `match_job(description_text)` — relevant parts of the owner's history plus
-   connections near the role
+7. `match_job(description_text, company?, title?, k)` — relevant parts of the owner's
+   history (hybrid retrieval over positions, recommendations and profile, each with
+   the reason it matched) plus connections near the role: at the company, with a
+   similar title, and formerly at the company. Title and company are inferred from
+   the text when not given; the company only from the owner's own companies.
 
 Resource: `kinship://imports/latest`. Prompt: `draft_intro_request(connection, job)`.
 
