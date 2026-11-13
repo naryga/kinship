@@ -17,6 +17,9 @@ by the SDK around every request handler) reads it from the HTTP request that
 carried *this* MCP message and sets a context variable for the duration of the
 handler. The binding therefore does not depend on which task the SDK runs the
 handler in, and synchronous tools (run in a worker thread) inherit it.
+
+The same binding carries the server's query embedder: `current_embedder()`
+returns it, or None when the server runs without one (full-text search only).
 """
 
 from __future__ import annotations
@@ -29,6 +32,7 @@ from typing import Any
 
 from mcp.server.context import CallNext, HandlerResult, ServerRequestContext
 
+from kinship.rag.embedder import Embedder
 from kinship.repo import Repository, SessionFactory, open_repository
 from kinship.server.auth import OWNER_SCOPE_KEY
 
@@ -41,6 +45,7 @@ class NoOwnerError(RuntimeError):
 class RequestOwner:
     owner_id: int
     session_factory: SessionFactory
+    embedder: Embedder | None = None
 
 
 _current: ContextVar[RequestOwner | None] = ContextVar("kinship_request_owner", default=None)
@@ -58,6 +63,14 @@ def current_owner_id() -> int:
     return _require().owner_id
 
 
+def current_embedder() -> Embedder | None:
+    """The server's query embedder, or None if it has none (full-text search only).
+
+    Raises `NoOwnerError` outside an authenticated request, like `repo_session()`.
+    """
+    return _require().embedder
+
+
 @contextmanager
 def repo_session() -> Iterator[Repository]:
     """Yield a read-only `Repository` for the authenticated owner."""
@@ -67,9 +80,11 @@ def repo_session() -> Iterator[Repository]:
 
 
 @contextmanager
-def bind_owner(owner_id: int, session_factory: SessionFactory) -> Iterator[None]:
+def bind_owner(
+    owner_id: int, session_factory: SessionFactory, embedder: Embedder | None = None
+) -> Iterator[None]:
     """Make `owner_id` the current owner inside the block (used by the middleware and tests)."""
-    token = _current.set(RequestOwner(owner_id, session_factory))
+    token = _current.set(RequestOwner(owner_id, session_factory, embedder))
     try:
         yield
     finally:
@@ -79,8 +94,9 @@ def bind_owner(owner_id: int, session_factory: SessionFactory) -> Iterator[None]
 class OwnerContextMiddleware:
     """MCP middleware: bind the owner of the carrying HTTP request around each handler."""
 
-    def __init__(self, session_factory: SessionFactory) -> None:
+    def __init__(self, session_factory: SessionFactory, embedder: Embedder | None = None) -> None:
         self._session_factory = session_factory
+        self._embedder = embedder
 
     async def __call__(
         self, ctx: ServerRequestContext[Any, Any], call_next: CallNext
@@ -89,7 +105,9 @@ class OwnerContextMiddleware:
         owner_id = scope.get(OWNER_SCOPE_KEY) if scope is not None else None
         # Always (re)bind, so a handler never sees an owner inherited from elsewhere.
         token = _current.set(
-            RequestOwner(owner_id, self._session_factory) if owner_id is not None else None
+            RequestOwner(owner_id, self._session_factory, self._embedder)
+            if owner_id is not None
+            else None
         )
         try:
             return await call_next(ctx)

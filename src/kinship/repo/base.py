@@ -37,6 +37,9 @@ from kinship.db.models import Base, OwnedMixin
 
 T = TypeVar("T")
 
+LOCAL_SETTINGS = frozenset({"hnsw.ef_search"})
+"""Settings a repository may change for the rest of its own transaction."""
+
 
 def owned_models() -> list[type[Any]]:
     """Every mapped model that carries `owner_id`, ordered by table name."""
@@ -121,6 +124,16 @@ class BaseRepository(OwnerScope):
     def rows(self, stmt: sa.Select[Any]) -> Sequence[sa.Row[Any]]:
         """All rows of a multi-column statement."""
         return self._session.execute(self._scoped(stmt)).all()
+
+    def set_local(self, name: str, value: int | str) -> None:
+        """Like `SET LOCAL name = value`: change a setting until the transaction ends.
+
+        Only names in `LOCAL_SETTINGS` are accepted, and name and value are sent
+        as bound parameters. It reads no table, so there is nothing to scope.
+        """
+        if name not in LOCAL_SETTINGS:
+            raise ValueError(f"{name!r} is not a setting a repository may change")
+        self._session.execute(sa.select(sa.func.set_config(name, str(value), True)))
 
     # -- common queries -----------------------------------------------------
 
