@@ -29,7 +29,8 @@ Connections
       rows are the connection's full role timeline: the state as of any export
       is the latest row at or before it, and every row after the first is a
       job change dated by its import. A spelling-only change of the company
-      name counts as a change (company normalization is a later step).
+      name counts as a change here; `company_id` (below) tells a new spelling
+      from a new employer.
 
 Owner snapshot tables (`my_positions`, `profiles`, `skills`, `education`)
     Mirror the newest import that has any rows for that table. Rows are matched
@@ -47,7 +48,13 @@ Links
     `connection_id` is recomputed for the owner's event rows on every import,
     so rows imported before their connection existed get linked later: by
     canonical profile URL where the row has one, otherwise by a unique full
-    name among the owner's connections. `company_id` is left NULL.
+    name among the owner's connections.
+
+Companies
+    The last step of every import rebuilds the owner's `companies` from all of
+    the owner's rows and sets `company_id` wherever a company is named; see
+    `kinship.ingest.companies`. Like everything above it depends only on the
+    set of exports imported, not on their order.
 
 Known limits, all outside the tested invariant: a mutable event field is only
 order-independent while the newest import still contains the row; message
@@ -88,6 +95,7 @@ from kinship.db.models import (
     SavedJob,
     Skill,
 )
+from kinship.ingest.companies import rebuild_companies
 from kinship.ingest.store import ImportStore
 from kinship.parser import ExportError, ParsedExport, parse_export
 from kinship.parser import records as parsed_records
@@ -839,6 +847,7 @@ def import_export(session: Session, owner_id: int, parsed: ParsedExport) -> Impo
     connections = _import_connections(store, parsed, record, timeline, summary)
     _import_snapshots(store, parsed, record, timeline, summary)
     _import_events(store, parsed, summary.is_newest, _ConnectionIndex(connections), summary)
+    summary.inserted["companies"] = rebuild_companies(session, owner_id).created
     store.flush()
     return summary
 

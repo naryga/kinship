@@ -64,7 +64,7 @@ def test_first_import_inserts_everything(session, owner, v1) -> None:
     for row in rows:
         assert row.first_seen_import_id == row.last_seen_import_id == summary.import_id
         assert row.removed_at is None
-        assert row.company_id is None
+        assert (row.company_id is None) == (not row.company_raw)
     # The first-seen state of every connection opens its history.
     assert count(session, ConnectionHistory, owner.id) == TRUTH.v1_count
 

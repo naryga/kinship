@@ -10,7 +10,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from kinship.db.models import Base, Connection, Import
+from kinship.db.models import Base, Company, Connection, Import
 from kinship.parser import ParsedExport, parse_export
 from kinship.synth import V1_EXPORTED_AT, V2_EXPORTED_AT
 
@@ -45,9 +45,10 @@ _IMPORT_COLUMNS = {"import_id", "first_seen_import_id", "last_seen_import_id"}
 def dump(session: Session, owner_id: int) -> dict[str, list[tuple[Any, ...]]]:
     """Every owned row of `owner_id`, without surrogate ids or load times.
 
-    Import ids become the import's SHA-256 and connection ids the connection's
-    natural key, so dumps of different owners (or import orders) compare equal
-    exactly when the data is the same.
+    Import ids become the import's SHA-256, connection ids the connection's
+    natural key and company ids the company's normalized key, so dumps of
+    different owners (or import orders) compare equal exactly when the data is
+    the same.
     """
     session.flush()
     session.expire_all()
@@ -58,6 +59,10 @@ def dump(session: Session, owner_id: int) -> dict[str, list[tuple[Any, ...]]]:
     connections = {
         row.id: row.profile_url or (row.first_name, row.last_name, row.connected_on)
         for row in session.scalars(select(Connection).where(Connection.owner_id == owner_id))
+    }
+    companies = {
+        row.id: row.name_normalized
+        for row in session.scalars(select(Company).where(Company.owner_id == owner_id))
     }
     result: dict[str, list[tuple[Any, ...]]] = {}
     for table in Base.metadata.sorted_tables:
@@ -73,6 +78,8 @@ def dump(session: Session, owner_id: int) -> dict[str, list[tuple[Any, ...]]]:
                     value = imports[value]
                 elif name == "connection_id" and value is not None:
                     value = connections[value]
+                elif name == "company_id" and value is not None:
+                    value = companies[value]
                 values.append((name, value))
             rows.append(tuple(values))
         result[table.name] = sorted(rows, key=repr)
