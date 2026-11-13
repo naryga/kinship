@@ -128,7 +128,9 @@ class JobMatchRepository(BaseRepository):
             }
             # One company's names differ only in spacing, so no mention counts twice.
             mentions = sum(
-                len(re.findall(rf"(?<= ){re.escape(name)}(?= )", haystack)) for name in names
+                len(re.findall(rf"(?<= ){re.escape(name)}(?= )", haystack))
+                for name in names
+                if f" {name} " in haystack  # cheap test first: most companies are not named
             )
             if not mentions:
                 continue

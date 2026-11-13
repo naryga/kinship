@@ -32,7 +32,7 @@ import re
 from collections import Counter
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from kinship.rag.chunking import POSITIONS, PROFILES, RECOMMENDATIONS
 from kinship.rag.embedder import Embedder
@@ -749,37 +749,29 @@ def _resolve_role(
         names = [c.display_name for c in named if c.id != chosen_id]
         return tuple(names[:MAX_OTHER_COMPANIES])
 
+    def role(name: str | None, known: bool, chosen_id: int | None = None, **more: Any) -> Role:
+        return Role(
+            title=role_title,
+            company=name,
+            title_inferred=title_inferred,
+            company_inferred=bool(name) and not given_company,
+            company_known=known,
+            other_companies=others(chosen_id),
+            **more,
+        )
+
     hint = given_company or company_hint
     if hint:
         matches = repo.find_companies(hint, limit=MAX_OTHER_COMPANIES + 1)
         exact = next((m for m in matches if m.match == "exact"), None)
         if exact is not None:
-            role = Role(
-                role_title,
-                exact.display_name,
-                title_inferred,
-                not given_company,
-                True,
-                others(exact.id),
-            )
-            return role, exact.id
+            return role(exact.display_name, True, exact.id), exact.id
         if given_company or not named:
-            role = Role(
-                role_title,
-                hint,
-                title_inferred,
-                not given_company,
-                False,
-                others(None),
-                tuple(m.display_name for m in matches[:MAX_OTHER_COMPANIES]),
-            )
-            return role, None
+            suggestions = tuple(m.display_name for m in matches[:MAX_OTHER_COMPANIES])
+            return role(hint, False, company_suggestions=suggestions), None
     if named:
-        best = named[0]
-        return Role(role_title, best.display_name, title_inferred, True, True, others(best.id)), (
-            best.id
-        )
-    return Role(role_title, None, title_inferred), None
+        return role(named[0].display_name, True, named[0].id), named[0].id
+    return role(None, False), None
 
 
 # -- entry point --------------------------------------------------------------
