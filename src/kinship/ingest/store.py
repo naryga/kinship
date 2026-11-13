@@ -116,6 +116,32 @@ class ImportStore:
     def flush(self) -> None:
         self._session.flush()
 
+    def values(self, model: type[OwnedMixin], *columns: str) -> list[tuple[Any, ...]]:
+        """`(id, *columns)` for every row of `model` that belongs to this owner."""
+        table = model.__table__  # type: ignore[attr-defined]
+        result = self._session.execute(
+            select(table.c.id, *(table.c[name] for name in columns))
+            .where(table.c.owner_id == self.owner_id)
+            .order_by(table.c.id)
+        )
+        return [tuple(row) for row in result]
+
+    def set_values(self, model: type[OwnedMixin], column: str, values: Mapping[int, Any]) -> None:
+        """Set one column on this owner's rows of `model` (row id -> new value)."""
+        if not values:
+            return
+        table = model.__table__  # type: ignore[attr-defined]
+        self._session.execute(
+            update(table)
+            .where(table.c.owner_id == self.owner_id, table.c.id == bindparam("row_id"))
+            .values({column: bindparam("new_value")}),
+            [{"row_id": row_id, "new_value": value} for row_id, value in values.items()],
+        )
+        # The update bypassed the ORM: make loaded rows re-read the column.
+        for loaded in list(self._session.identity_map.values()):
+            if isinstance(loaded, model) and loaded.id in values:  # type: ignore[attr-defined]
+                self._session.expire(loaded, [column])
+
     # -- column-only reads for the larger tables ---------------------------
 
     def sightings(self) -> list[SightingRow]:
