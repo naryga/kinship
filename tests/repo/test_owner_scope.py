@@ -1,5 +1,7 @@
 """The repository layer requires an owner and never returns another owner's rows."""
 
+from datetime import UTC, datetime
+
 import pytest
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
@@ -135,7 +137,22 @@ def test_latest_import_is_per_owner(two_owners, session: Session, make_owner) ->
     assert latest_a.source_sha256 == "sha-alpha"
     assert latest_a.as_dict()["exported_at"].startswith("2026-01-02")
 
-    newer = Import(owner_id=two_owners.a.owner_id, source_sha256="sha-alpha-2")
+    # "Latest" is decided by the export date, not by load order.
+    older = Import(
+        owner_id=two_owners.a.owner_id,
+        source_sha256="sha-alpha-0",
+        exported_at=datetime(2025, 6, 1, tzinfo=UTC),
+    )
+    undated = Import(owner_id=two_owners.a.owner_id, source_sha256="sha-alpha-1")
+    session.add_all([older, undated])
+    session.flush()
+    assert two_owners.repo_a.latest_import().id == two_owners.a.import_id
+
+    newer = Import(
+        owner_id=two_owners.a.owner_id,
+        source_sha256="sha-alpha-2",
+        exported_at=datetime(2026, 3, 1, tzinfo=UTC),
+    )
     session.add(newer)
     session.flush()
     assert two_owners.repo_a.latest_import().id == newer.id
