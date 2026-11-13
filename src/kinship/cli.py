@@ -162,5 +162,102 @@ def import_(
     typer.echo(summary.format())
 
 
+@app.command("eval")
+def eval_(
+    embedder: Annotated[
+        str,
+        typer.Option(
+            help="fake (offline, lexical stand-in; the default) or openai (needs "
+            "OPENAI_API_KEY; embeds a few dozen short texts, a fraction of a cent)."
+        ),
+    ] = "fake",
+    k: Annotated[int, typer.Option(min=1, help="Cut-off for recall@k.")] = 5,
+    golden: Annotated[
+        Path | None, typer.Option(help="Golden set (JSON Lines). Default: evals/golden.jsonl.")
+    ] = None,
+    export: Annotated[
+        Path | None,
+        typer.Option(
+            help="Export .zip or directory to evaluate against. Default: the synthetic "
+            "export the golden set was written for (seed 42, version 2), generated on the fly."
+        ),
+    ] = None,
+    output_format: Annotated[
+        str, typer.Option("--format", help="text, markdown (the README table) or json.")
+    ] = "text",
+    min_recall: Annotated[
+        float | None,
+        typer.Option(min=0, max=1, help="Exit with status 1 if hybrid recall@k is below this."),
+    ] = None,
+    min_mrr: Annotated[
+        float | None,
+        typer.Option(min=0, max=1, help="Exit with status 1 if hybrid MRR is below this."),
+    ] = None,
+    database_url: Annotated[
+        str | None,
+        typer.Option(
+            help="Postgres server to create the throwaway database on. Default: DATABASE_URL."
+        ),
+    ] = None,
+) -> None:
+    """Measure retrieval quality: recall@k and MRR for full-text, vector and hybrid search.
+
+    Creates a uniquely named throwaway database on the Postgres server (the
+    role must be allowed to create databases), migrates it, imports the
+    synthetic export, embeds it, runs the golden queries and drops the database
+    again. No existing database is written to. Needs a source checkout of the
+    repository: the migrations and evals/golden.jsonl are read from it.
+    """
+    from sqlalchemy.exc import OperationalError
+
+    from kinship.config import get_settings
+    from kinship.db.scratch import ScratchDatabaseError
+    from kinship.parser import ExportError
+    from kinship.rag.embedder import EmbedderError, get_embedder
+    from kinship.rag.evaluate import (
+        GoldenError,
+        default_golden_path,
+        evaluate_in_scratch_database,
+        load_golden,
+    )
+
+    def fail(message: str) -> typer.Exit:
+        typer.echo(f"Error: {message}", err=True)
+        return typer.Exit(1)
+
+    if output_format not in ("text", "markdown", "json"):
+        raise typer.BadParameter("must be text, markdown or json", param_hint="--format")
+    settings = get_settings()
+    try:
+        chosen = get_embedder(settings, embedder)
+        queries = load_golden(golden or default_golden_path())
+        report = evaluate_in_scratch_database(
+            chosen,
+            queries,
+            k=k,
+            export_path=export,
+            server_url=database_url or settings.database_url,
+        )
+    except (EmbedderError, GoldenError, ExportError, ScratchDatabaseError) as error:
+        raise fail(str(error)) from error
+    except OperationalError as error:
+        raise fail(
+            "could not use the Postgres server (is it running, and may the role create "
+            f"databases?): {str(error.orig).strip()}"
+        ) from error
+
+    rendered = {"text": report.to_text, "markdown": report.to_markdown, "json": report.to_json}
+    typer.echo(rendered[output_format]())
+
+    hybrid = report.overall["hybrid"]
+    below = []
+    if min_recall is not None and hybrid.recall_at_k < min_recall:
+        below.append(f"hybrid recall@{k} {hybrid.recall_at_k:.2f} is below {min_recall:.2f}")
+    if min_mrr is not None and hybrid.mrr < min_mrr:
+        below.append(f"hybrid MRR {hybrid.mrr:.2f} is below {min_mrr:.2f}")
+    if below:
+        raise fail("; ".join(below))
+
+
 if __name__ == "__main__":
     app()

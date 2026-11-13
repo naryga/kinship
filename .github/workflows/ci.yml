@@ -33,3 +33,6 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run pytest
+      # Retrieval quality over the synthetic export. Measured hybrid recall@5
+      # with the fake embedder is 0.75; the floor leaves room for two queries.
+      - run: uv run kinship eval --embedder fake --min-recall 0.65
