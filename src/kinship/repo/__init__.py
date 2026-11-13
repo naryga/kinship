@@ -12,6 +12,7 @@ from kinship.repo.base import BaseRepository, OwnerScope, owned_models
 from kinship.repo.chunks import ChunksRepository
 from kinship.repo.companies import CompaniesRepository, CompanyMatch
 from kinship.repo.imports import ImportInfo, ImportsRepository
+from kinship.repo.retrieval import ChunkHit, RetrievalRepository, SourceInfo
 from kinship.repo.session import (
     SessionFactory,
     database_is_up,
@@ -25,6 +26,7 @@ class Repository(
     ChunksRepository,
     CompaniesRepository,
     ImportsRepository,
+    RetrievalRepository,
     BaseRepository,
 ):
     """All owner-scoped queries, bound to one session and one owner."""
@@ -32,6 +34,7 @@ class Repository(
 
 __all__ = [
     "BaseRepository",
+    "ChunkHit",
     "ChunksRepository",
     "CompaniesRepository",
     "CompanyMatch",
@@ -39,7 +42,9 @@ __all__ = [
     "ImportsRepository",
     "OwnerScope",
     "Repository",
+    "RetrievalRepository",
     "SessionFactory",
+    "SourceInfo",
     "database_is_up",
     "default_session_factory",
     "open_repository",
